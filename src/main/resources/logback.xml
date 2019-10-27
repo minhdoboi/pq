@@ -1,0 +1,16 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date [%thread] %highlight([%level]) %logger{36}\(%L\) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="priv.pq" level="INFO"/>
+    <logger name="org.apache" level="WARN"/>
+    <logger name="org.apache.hadoop.util.NativeCodeLoader" level="ERROR"/>
+
+    <root level="info">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

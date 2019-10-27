@@ -1,0 +1,16 @@
+language: scala
+scala:
+  - 2.13.1
+jdk:
+  - openjdk10
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION assembly
+deploy:
+  provider: releases
+  api_key:
+    secure: E7e2LyPsEog+UxrRYa12qPelheoJcCDzQ0JoEqZWmwRO9sO2KLgvDB4VIQE5PXvUAOLZ6mD5yQ3gRKUnTYAGyS9XJzPOH2tuwlmz459w0ck2Zt3oMn8JOYkh+EE9WJDa+CVaqsS86j7ZTD1MisS6VB9befFDO3J1Z+gp7Y2bNobblhazVc5Ja2hjKKVS4EzT0j00c7Bu6eSsFlGHtcoIiAhUlLqghh/WtA5ywiU/MlDEKkcfq8Uj4q0spAbwruQ4feen6UaCv38xixX2EnHCjSWpfYzo4MO2S09cznKjxWbTg63CbUqwCc7vQR/5toLu9gVN3ERHSSxCKQy3jcB7MqU8Jwm4kqqdQYB4fyIUnH53zSDoeWNb9VW/bzpR396gA38BOtdN7rHutyqla1U5dcgRw2V3qWregcUu4Gs3YU4jCFMR8PR9zwlx54qo+jWbfnSAy5dBAYI2IZ0DbIKab2+PrLu6f6HOMd20ctTcaqpHTOwWOL0Jf94y8DrCoTvUmmQURLk0KVD1NEG4WgkCTgPTUB0P4sWvEjfh2a5LCZa1qUdq7lZd9OMkcLDcO4JL1kIZ9cwoHsLzTLTPRgOW7ZxlmLNuGmd7iWmnB7QTs4+EfcLCwA7KdxAtIWrjGHQA8GLo9mSuuSDYTcYQ0lMAgUnCz97vi1BZlO7NORxE5ho=
+  file: $TRAVIS_BUILD_DIR/target/scala-2.13/pq.jar
+  skip_cleanup: true
+  on:
+    repo: minhdoboi/pq
+    tags: true
