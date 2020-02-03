@@ -1,5 +1,7 @@
 package priv.pq
 
+import priv.pq.reader.Tree
+
 case class BootParams(
                        path: String                = "",
                        fields: List[List[String]]  = Nil,
@@ -7,10 +9,17 @@ case class BootParams(
                        where: Option[String]       = None,
                        distinct : Boolean          = false,
                        summary : Boolean           = false,
-                       dumpSchema : Boolean        = false
+                       dumpSchema : Boolean        = false,
+                       format : Format.Value = Format.Parquet
 ) {
   def fieldTrees = Tree.fromList(fields)
 }
+
+object Format extends Enumeration {
+  val Avro = Value("avro")
+  val Parquet = Value("parquet")
+}
+
 
 object BootParams {
   import scopt._
@@ -45,6 +54,11 @@ object BootParams {
     opt[Unit]("dumpSchema")
       .optional()
       .action((_, p) ⇒ p.copy(dumpSchema = true))
+
+    opt[String]('t', "format")
+      .optional()
+      .text("format (default=" + BootParams().format+")")
+      .action((x, p) ⇒ p.copy(format = Format.withName(x)))
 
     arg[String]("path")
       .required()

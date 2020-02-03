@@ -1,13 +1,14 @@
 package priv.pq
 
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport, AvroSchemaConverter, AvroWriteSupport}
+import org.apache.parquet.avro.{AvroReadSupport, AvroSchemaConverter, AvroWriteSupport}
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.slf4j.LoggerFactory
+import priv.pq.reader.{AvroReader, AvroSchemaReader, ParquetReader, ParquetSchemaReader, SchemaOps, SchemaReader}
+
 import scala.util.Using
-import SchemaReader.SchemaOps
 
 object Main extends App {
   val params = BootParams.parse(args).get
@@ -25,35 +26,32 @@ class Runner(params : BootParams) {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   val conf = new Configuration()
   val inputFile = HadoopInputFile.fromPath(new Path(params.path), conf)
-  val schema = SchemaReader.readSchema(inputFile, conf)
+  val schemaReader : SchemaReader = params.format match {
+    case Format.Parquet => ParquetSchemaReader
+    case Format.Avro => AvroSchemaReader
+  }
+
+  val schema = schemaReader.readSchema(inputFile, conf)
   val writeOldStructure = !schema.hasElementField
 
   def dumpSchema() = {
-    println(SchemaReader.readSchemaMessageType(inputFile, conf).toString)
+    schemaReader.dumpSchema(inputFile, conf)
   }
 
   def explore() = {
-    logger.debug("Explore parquet " + params + ", " + params.fieldTrees)
+    logger.debug("Explore " + params + ", " + params.fieldTrees)
 
     conf.set(AvroWriteSupport.WRITE_OLD_LIST_STRUCTURE, writeOldStructure.toString)
     if (params.fieldTrees.nonEmpty) {
-      val subset = SchemaReader.subsetSchema(schema, params.fieldTrees).map(SchemaReader.fixSchema).get
+      val subset = schemaReader.subsetSchema(schema, params.fieldTrees).get
 
       logger.debug(new AvroSchemaConverter(conf).convert(subset).toString)
       logger.debug("project on " + subset.toString(true))
       AvroReadSupport.setRequestedProjection(conf, subset)
     }
-    val parquetReader = AvroParquetReader.builder[GenericRecord](inputFile)
-      .withDataModel(GenericData.get())
-      .build()
-    val reader = new Reader[GenericRecord] {
-      def read(): Option[GenericRecord] = {
-        Option(parquetReader.read())
-      }
-
-      def close(): Unit = {
-        parquetReader.close()
-      }
+    val reader = params.format match {
+      case Format.Parquet => new ParquetReader(inputFile)
+      case Format.Avro => new AvroReader(inputFile)
     }
 
     Using(reader) { reader =>
